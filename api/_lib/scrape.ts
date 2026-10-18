@@ -8,6 +8,7 @@ export const BOARDS = {
   sub6_4: "세미나 및 행사",
   sub6_3_a: "학부인재모집",
   sub6_3_b: "취업정보",
+  intl: "국제처 공지사항",
 } as const;
 export type BoardId = keyof typeof BOARDS;
 export const BOARD_IDS = Object.keys(BOARDS) as BoardId[];
@@ -47,7 +48,61 @@ export function parseBoard(html: string, board: BoardId): Notice[] {
   return [...byId.values()].sort((a, b) => a.id - b.id);
 }
 
+// ── 국제처 (international.knu.ac.kr) — 그누보드가 아닌 별도 CMS ──────────────
+const INTL_BASE = "https://international.knu.ac.kr";
+const INTL_LIST = `${INTL_BASE}/HOME/global/sub.htm?nav_code=glo1729572883`; // 공지사항(국제화 프로그램)
+
+/** 글 링크의 mv_data(base64)를 풀어 idx(글 고유번호)를 꺼냄 */
+function intlIdx(href: string): number | null {
+  const raw = new URL(href, INTL_BASE).searchParams.get("mv_data");
+  if (!raw) return null;
+  for (const v of [raw, safeDecode(raw)]) {
+    const m = Buffer.from(v, "base64").toString("utf8").match(/(?:^|&)idx=(\d+)/);
+    if (m) return Number(m[1]);
+  }
+  return null;
+}
+function safeDecode(v: string) {
+  try {
+    return decodeURIComponent(v);
+  } catch {
+    return v;
+  }
+}
+
+export function parseIntl(html: string): Notice[] {
+  const $ = cheerio.load(html);
+  const byId = new Map<number, Notice>();
+  $("table tbody tr").each((_, tr) => {
+    const row = $(tr);
+    const link = row.find("a[href*='mv_data']").first();
+    const href = link.attr("href");
+    if (!href) return;
+    const id = intlIdx(href);
+    if (id === null) return;
+    const dates = row.text().match(/\d{4}[/.-]\d{2}[/.-]\d{2}/g);
+    byId.set(id, {
+      id,
+      board: "intl",
+      title: link.text().replace(/\s+/g, " ").trim(),
+      category: "",
+      posted_on: dates ? dates[dates.length - 1].replace(/[/.]/g, "-") : null,
+      url: new URL(href, INTL_BASE).toString(),
+    });
+  });
+  return [...byId.values()].sort((a, b) => a.id - b.id);
+}
+
 export async function fetchBoard(board: BoardId): Promise<Notice[]> {
+  if (board === "intl") {
+    const res = await fetch(INTL_LIST, {
+      headers: { "User-Agent": "Mozilla/5.0 (KNU-CSE-notice; student project)", "Accept-Language": "ko-KR,ko;q=0.9" },
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!res.ok) throw new Error(`${BOARDS[board]} 응답 ${res.status}`);
+    return parseIntl(await res.text());
+  }
+
   const res = await fetch(`${BASE}?bo_table=${board}&lang=kor`, {
     headers: {
       "User-Agent": "Mozilla/5.0 (KNU-CSE-notice; student project)",

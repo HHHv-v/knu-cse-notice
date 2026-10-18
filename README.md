@@ -7,13 +7,14 @@
 - 세미나 및 행사 (`sub6_4`)
 - 학부인재모집 (`sub6_3_a`)
 - 취업정보 (`sub6_3_b`)
+- 국제처 공지사항(국제화 프로그램) — international.knu.ac.kr (`intl`)
 
 ## 구조
 
 ```
 GitHub Actions (30분마다)
    └─▶ Vercel /api/check  (서울 리전 icn1)
-          ├─ 4개 게시판 1페이지 스크래핑 (게시판별 wr_id 비교)
+          ├─ 5개 게시판 1페이지 스크래핑 (게시판별 글 번호 비교)
           ├─ Supabase notices 테이블에 저장
           └─ 새 글이면 subscriptions 구독자에게 web-push 전송
 브라우저(PWA)

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { checkSupport, currentSubscription, subscribe, unsubscribe, type Support } from "./push";
 import { DEMO_NOTICES } from "./demo";
 
-export type BoardId = "sub6_1_a" | "sub6_4" | "sub6_3_a" | "sub6_3_b";
+export type BoardId = "sub6_1_a" | "sub6_4" | "sub6_3_a" | "sub6_3_b" | "intl";
 export type Notice = {
   id: number;
   board: BoardId;
@@ -17,6 +17,7 @@ const BOARD_NAME: Record<BoardId, string> = {
   sub6_4: "세미나 및 행사",
   sub6_3_a: "학부인재모집",
   sub6_3_b: "취업정보",
+  intl: "국제처 공지사항",
 };
 // 목록 왼쪽 칸용 짧은 이름
 const BOARD_SHORT: Record<BoardId, string> = {
@@ -24,6 +25,7 @@ const BOARD_SHORT: Record<BoardId, string> = {
   sub6_4: "세미나",
   sub6_3_a: "인재모집",
   sub6_3_b: "취업정보",
+  intl: "국제처",
 };
 
 const ALL_BOARDS = Object.keys(BOARD_NAME) as BoardId[];
