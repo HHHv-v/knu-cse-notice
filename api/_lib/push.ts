@@ -15,6 +15,7 @@ export type SubscriptionRow = {
   endpoint: string;
   p256dh: string;
   auth: string;
+  boards: string[]; // 빈 배열 = 전체 게시판
 };
 
 export type PushPayload = { title: string; body: string; url: string; tag?: string };

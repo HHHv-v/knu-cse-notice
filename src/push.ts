@@ -60,7 +60,7 @@ async function post(path: string, body: unknown) {
 }
 
 /** 권한 요청 → 구독 → 서버 저장 */
-export async function subscribe(): Promise<PushSubscription> {
+export async function subscribe(boards: string[]): Promise<PushSubscription> {
   if (!VAPID_PUBLIC_KEY) throw new Error("VITE_VAPID_PUBLIC_KEY가 설정되지 않았어요");
 
   const permission = await Notification.requestPermission();
@@ -76,7 +76,7 @@ export async function subscribe(): Promise<PushSubscription> {
       applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
     }));
 
-  await post("/api/subscribe", { subscription: sub.toJSON() });
+  await post("/api/subscribe", { subscription: sub.toJSON(), boards });
   return sub;
 }
 

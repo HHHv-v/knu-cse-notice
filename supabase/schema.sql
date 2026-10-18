@@ -16,6 +16,7 @@ create table if not exists subscriptions (
   endpoint   text primary key,
   p256dh     text not null,
   auth       text not null,
+  boards     text[] not null default '{}',  -- 받을 게시판 (비어 있으면 전체)
   created_at timestamptz not null default now()
 );
 
@@ -26,3 +27,6 @@ alter table subscriptions enable row level security;
 
 -- 'Automatically expose new tables'를 끈 프로젝트에서도 서버(service_role)가 접근할 수 있게
 grant select, insert, update, delete on notices, subscriptions to service_role;
+
+-- 이미 만든 프로젝트에 게시판 선택 기능을 추가할 때
+alter table subscriptions add column if not exists boards text[] not null default '{}';

@@ -56,12 +56,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   let sent = 0;
   if (fresh.length) {
-    const { data: subs, error } = await db.from("subscriptions").select("endpoint, p256dh, auth");
+    const { data: subs, error } = await db.from("subscriptions").select("endpoint, p256dh, auth, boards");
     if (error) return res.status(500).json({ error: error.message, results });
 
     for (const post of fresh) {
       const ok = await Promise.all(
-        (subs as SubscriptionRow[]).map((s) =>
+        (subs as SubscriptionRow[])
+          .filter((s) => !s.boards?.length || s.boards.includes(post.board))
+          .map((s) =>
           sendPush(s, {
             title: `${BOARDS[post.board]} 새 글`,
             body: post.category ? `[${post.category}] ${post.title}` : post.title,

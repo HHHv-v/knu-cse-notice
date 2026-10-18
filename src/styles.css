@@ -133,6 +133,28 @@ a.slip:hover { transform: rotate(0deg); }
 }
 .lede { margin: 0 0 24px; color: var(--muted); max-width: 34em; }
 
+.cats { border: 0; padding: 0; margin: 0 0 22px; }
+.cats legend { font-size: 14px; font-weight: 600; margin-bottom: 10px; padding: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  font: inherit;
+  font-size: 14px;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+}
+.chip[aria-pressed="true"] {
+  background: var(--crimson-soft);
+  border-color: var(--crimson);
+  color: var(--crimson);
+  font-weight: 600;
+}
+.chip:disabled { cursor: not-allowed; }
+
 .actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .primary, .quiet {
   font: inherit;

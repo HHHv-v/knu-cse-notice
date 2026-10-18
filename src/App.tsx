@@ -26,6 +26,29 @@ const BOARD_SHORT: Record<BoardId, string> = {
   sub6_3_b: "취업정보",
 };
 
+const ALL_BOARDS = Object.keys(BOARD_NAME) as BoardId[];
+const STORE_KEY = "knu-cse-notice:boards";
+function loadBoards(): BoardId[] {
+  try {
+    const v = JSON.parse(localStorage.getItem(STORE_KEY) || "null");
+    if (Array.isArray(v)) {
+      const ok = v.filter((b): b is BoardId => ALL_BOARDS.includes(b));
+      if (ok.length) return ok;
+    }
+  } catch {
+    /* 저장소를 못 쓰는 환경 */
+  }
+  return ALL_BOARDS;
+}
+function saveBoards(b: BoardId[]) {
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify(b));
+  } catch {
+    /* 저장소를 못 쓰는 환경 */
+  }
+}
+const sameSet = (a: string[], b: string[]) => a.length === b.length && a.every((x) => b.includes(x));
+
 const WEEK = ["일", "월", "화", "수", "목", "금", "토"];
 function dayLabel(iso: string | null): string {
   if (!iso) return "날짜 없음";
@@ -44,6 +67,8 @@ export default function App() {
 
   const [support, setSupport] = useState<Support>("ok");
   const [subscribed, setSubscribed] = useState<boolean | null>(null);
+  const [boards, setBoards] = useState<BoardId[]>(loadBoards);
+  const [savedBoards, setSavedBoards] = useState<BoardId[]>(loadBoards);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
 
@@ -67,13 +92,19 @@ export default function App() {
     }
   }, []);
 
+  const toggleBoard = (b: BoardId) =>
+    setBoards((prev) => (prev.includes(b) ? prev.filter((x) => x !== b) : ALL_BOARDS.filter((x) => prev.includes(x) || x === b)));
+
   async function handleSubscribe() {
     setBusy(true);
     setStatus(null);
     try {
-      await subscribe();
+      await subscribe(boards);
+      saveBoards(boards);
+      setSavedBoards(boards);
+      const wasOn = subscribed;
       setSubscribed(true);
-      setStatus({ tone: "ok", text: "알림을 켰어요. 확인 알림이 곧 도착해요." });
+      setStatus({ tone: "ok", text: wasOn ? "받을 게시판을 저장했어요." : "알림을 켰어요. 확인 알림이 곧 도착해요." });
     } catch (e) {
       const msg = (e as Error).message;
       setStatus({
@@ -102,6 +133,7 @@ export default function App() {
     }
   }
 
+  const dirty = !!subscribed && !sameSet(boards, savedBoards);
   const latest = notices?.[0];
   const groups = useMemo(() => {
     const map = new Map<string, Notice[]>();
@@ -144,7 +176,7 @@ export default function App() {
             {subscribed ? "새 공지가 올라오면 알려드릴게요" : "새 공지, 게시판보다 먼저 알기"}
           </h1>
           <p className="lede">
-            학부 공지사항, 세미나 및 행사, 학부인재모집, 취업정보 게시판을 30분마다 확인해서 새 글이 올라오면 이 기기로 알려드려요.
+            고른 게시판을 30분마다 확인해서 새 글이 올라오면 이 기기로 알려드려요.
           </p>
 
           {support === "ios-install" ? (
@@ -162,22 +194,46 @@ export default function App() {
               이 브라우저는 푸시 알림을 지원하지 않아요. 크롬, 엣지, 삼성 인터넷이나 최신 사파리에서 열어주세요.
             </p>
           ) : (
-            <div className="actions">
+            <>
+              <fieldset className="cats">
+                <legend>알림 받을 게시판</legend>
+                <div className="chips">
+                  {ALL_BOARDS.map((b) => {
+                    const on = boards.includes(b);
+                    return (
+                      <button
+                        key={b}
+                        type="button"
+                        className="chip"
+                        aria-pressed={on}
+                        disabled={on && boards.length === 1}
+                        title={on && boards.length === 1 ? "게시판을 하나 이상 골라야 해요" : undefined}
+                        onClick={() => toggleBoard(b)}
+                      >
+                        {BOARD_NAME[b]}
+                      </button>
+                    );
+                  })}
+                </div>
+              </fieldset>
+
+              <div className="actions">
                 {!subscribed ? (
                   <button className="primary" onClick={handleSubscribe} disabled={busy || subscribed === null}>
                     {busy ? "켜는 중…" : "알림 켜기"}
                   </button>
                 ) : (
                   <>
-                    <button className="primary" disabled>
-                      알림 켜짐
+                    <button className="primary" onClick={handleSubscribe} disabled={busy || !dirty}>
+                      {busy ? "저장 중…" : dirty ? "설정 저장" : "알림 켜짐"}
                     </button>
                     <button className="quiet" onClick={handleUnsubscribe} disabled={busy}>
                       알림 끄기
                     </button>
                   </>
                 )}
-            </div>
+              </div>
+            </>
           )}
 
           {status && (
