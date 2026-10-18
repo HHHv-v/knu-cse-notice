@@ -1,10 +1,12 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { db } from "./_lib/db.js";
+import { BOARD_IDS } from "./_lib/scrape.js";
 
 export default async function handler(_req: VercelRequest, res: VercelResponse) {
   const { data, error } = await db
     .from("notices")
     .select("id, board, title, category, posted_on, url")
+    .in("board", BOARD_IDS) // 감시를 그만둔 게시판의 예전 글은 숨김
     .order("posted_on", { ascending: false, nullsFirst: false })
     .order("first_seen", { ascending: false })
     .order("id", { ascending: false })
