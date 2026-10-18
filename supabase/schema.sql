@@ -23,3 +23,6 @@ create table if not exists subscriptions (
 -- 서버는 service_role 키로 접근하므로 RLS 영향 없음.
 alter table notices       enable row level security;
 alter table subscriptions enable row level security;
+
+-- 'Automatically expose new tables'를 끈 프로젝트에서도 서버(service_role)가 접근할 수 있게
+grant select, insert, update, delete on notices, subscriptions to service_role;
