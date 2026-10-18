@@ -11,6 +11,6 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
     .limit(50);
   if (error) return res.status(500).json({ error: error.message });
 
-  res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=600");
+  res.setHeader("Cache-Control", "s-maxage=60, stale-while-revalidate=300");
   return res.json({ notices: data });
 }

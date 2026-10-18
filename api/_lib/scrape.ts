@@ -32,13 +32,14 @@ export function parseBoard(html: string, board: BoardId): Notice[] {
     if (!m) return;
 
     const id = Number(m[1]);
-    const date = row.text().match(/\d{4}-\d{2}-\d{2}/);
+    // 작성일은 항상 마지막 칸 — 세미나 게시판처럼 행사일 칸이 앞에 있어도 마지막 날짜를 씀
+    const dates = row.text().match(/\d{4}-\d{2}-\d{2}/g);
     byId.set(id, {
       id,
       board,
       title: link.text().replace(/\s+/g, " ").trim(),
       category: row.find('a[href*="sca="]').first().text().trim(),
-      posted_on: date ? date[0] : null,
+      posted_on: dates ? dates[dates.length - 1] : null,
       url: `${BASE}?bo_table=${board}&wr_id=${id}`,
     });
   });
